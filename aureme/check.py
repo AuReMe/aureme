@@ -17,7 +17,7 @@ import os
 
 from padmet.utils.connection import gbk_to_faa, pgdb_to_padmet, sbmlGenerator
 
-from aucome.utils import parse_config_file
+from aureme.utils import parse_config_file
 
 from Bio import SeqIO
 from multiprocessing import Pool
