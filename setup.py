@@ -30,13 +30,6 @@ setup(name='aureme',
       ],
       packages=['aureme'],
       install_requires=[
-            'mpwt==0.5.1',
-            'padmet==4.0',
-            'eventlet==0.25.0',
-            'intervene==0.6.4',
-            'lxml==4.3.4',
-            'requests==2.22.0',
-            'rpy2==3.0.5',
             'scipy==1.3.0',
       ],
       entry_points={
