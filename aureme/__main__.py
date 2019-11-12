@@ -124,18 +124,25 @@ def create_run(run_id):
     else:
         print('creating Run %s' %run_id)
         os.mkdir('{0}'.format(run_id))
-        all_folders = ['studied_organisms', 'model_organisms', 'networks', 'orthology_based',\
-                       'orthology_based/Orthofinder_WD', 'annotation_based',\
-                       'annotation_based/PGDBs', 'annotation_based/PADMETs',\
-                       'annotation_based/SBMLs', 'analysis', 'logs',\
-                       'networks/PADMETs', 'networks/SBMLs']
+        all_folders = ['analysis', 'analysis/flux_analysis', 'analysis/report', 'analysis/topological_analysis', 'analysis/askomics', 'analysis/wiki_pages',
+                       'annotation_based_reconstruction',
+                       'database',
+                       'gap_filling', 'gap_filling/original_output',
+                       'genomic_data',
+                       'growth_medium',
+                       'manual_curation', 'manual_curation/template',
+                       'networks', 'networks/external_network/', 'networks/output_annotation_based_reconstruction', 'networks/output_annotation_based_reconstruction/pathwaytools', 'networks/output_orthology_based_reconstruction', 'networks/output_orthology_based_reconstruction/orthofinder',
+                       'orthology_based_reconstruction', 'orthology_based_reconstruction/orthofinder_wd',
+                       'targets_compounds']
         for folder in all_folders:
             print('creating folder {0}/{1}'.format(run_id, folder))
             os.mkdir("{0}/{1}".format(run_id, folder))
 
+        """
         with open('{0}/{1}/group_template.tsv'.format(run_id, 'analysis'), 'w') as group_file:
             group_writer = csv.writer(group_file, delimiter='\t')
             group_writer.writerow(['all', *os.listdir('{0}/{1}'.format(run_id, 'studied_organisms'))])
+        """
         config_file_path = '{0}/config.txt'.format(run_id)
         create_config_file(config_file_path, run_id)
 
