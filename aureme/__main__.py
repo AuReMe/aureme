@@ -1,11 +1,11 @@
 """
 usage:
-    aucome --init=ID [-v]
-    aucome <command> [<args>...]
-    aucome -R --run=ID
-    aucome --version
-    aucome --installPWT=PWT_path [--ptools=ptools_path]
-    aucome --uninstallPWT
+    aureme --init=ID [-v]
+    aureme <command> [<args>...]
+    aureme -R --run=ID
+    aureme --version
+    aureme --installPWT=PWT_path [--ptools=ptools_path]
+    aureme --uninstallPWT
 
 options:
     -h --help     Show help.
@@ -24,7 +24,7 @@ The subcommands are:
     analysis    Analyze results
     compare    Compare group of species
 
-See 'aucome <command> -h' for more information on a specific command.
+See 'aureme <command> -h' for more information on a specific command.
 """
 import configparser
 import csv
@@ -39,9 +39,9 @@ import shutil
 import subprocess
 import sys
 
-import aucome
+import aureme
 
-release_on_gitlab = "https://raw.githubusercontent.com/AuReMe/aucome/master/release.txt"
+release_on_gitlab = "https://raw.githubusercontent.com/AuReMe/aureme/master/release.txt"
 
 
 def main(args=None):
@@ -79,7 +79,7 @@ def main(args=None):
         if online_version:
             print("You are using the version %s, the latest is %s" %(current_version, online_version))
         else:
-            print('No internet connection. Skip checking AuCoMe version.')
+            print('No internet connection. Skip checking aureme version.')
         return
 
     if command:
@@ -87,32 +87,32 @@ def main(args=None):
             sys.exit(command + ' not a valid command: workflow, check, reconstruction, orthology, draft, analysis, compare.')
 
         if '-h' in command_args:
-            getattr(aucome, command).command_help()
+            getattr(aureme, command).command_help()
             sys.exit()
 
         # Add command to command_args to be parse by docopt.
         command_args.insert(0,command)
 
         if command == 'workflow':
-            aucome.workflow.workflow_parse_args(command_args)
+            aureme.workflow.workflow_parse_args(command_args)
 
         elif command == 'check':
-            aucome.check.check_parse_args(command_args)
+            aureme.check.check_parse_args(command_args)
 
         elif command == 'reconstruction':
-            aucome.reconstruction.reconstruction_parse_args(command_args)
+            aureme.reconstruction.reconstruction_parse_args(command_args)
         
         elif command == 'orthology':
-            aucome.orthology.orthology_parse_args(command_args)
+            aureme.orthology.orthology_parse_args(command_args)
 
         elif command == 'draft':
-            aucome.draft.draft_parse_args(command_args)
+            aureme.draft.draft_parse_args(command_args)
 
         elif command == 'analysis':
-            aucome.analysis.analysis_parse_args(command_args)
+            aureme.analysis.analysis_parse_args(command_args)
 
         elif command == 'compare':
-            aucome.compare.compare_parse_args(command_args)
+            aureme.compare.compare_parse_args(command_args)
 
 
 def create_run(run_id):
