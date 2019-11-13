@@ -19,7 +19,7 @@ from multiprocessing import Pool
 
 from padmet.utils.exploration import compare_padmet, dendrogram_reactions_distance
 
-from aucome.utils import parse_config_file
+from aureme.utils import parse_config_file
 
 
 def command_help():

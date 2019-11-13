@@ -54,15 +54,13 @@ def main(args=None):
     if args["--init"]:
         run_id = args["--init"]
         create_run(run_id)
-        chmod_cmds = ["chmod", "-R", "777", run_id]
-        subprocess.call(chmod_cmds)
+        get_full_right(run_id)
         return
 
     # Add permission to all folder in run_id, usefull because all cmd exec from container are root based.
     if args['-R']:
         run_id = args["--run"]
-        chmod_cmds = ["chmod", "-R", "777", run_id]
-        subprocess.call(chmod_cmds)
+        get_full_right(run_id)
         return
 
     if args['--installPWT']:
@@ -117,34 +115,40 @@ def main(args=None):
 
 def create_run(run_id):
     """
-    Create a run folder
+    Create the folders of Aureme workspace.
     """
     if os.path.isdir('{0}'.format(run_id)):
-        print("Run '%s' already exist, remove this folder manually before" %run_id)
+        print("Run '%s' already exist, remove this folder manually before"
+              %run_id)
     else:
-        print('creating Run %s' %run_id)
+        print('------>RUNNING STEP : Working directory initialization: run %s'
+              %run_id)
         os.mkdir('{0}'.format(run_id))
-        all_folders = ['analysis', 'analysis/flux_analysis', 'analysis/report', 'analysis/topological_analysis', 'analysis/askomics', 'analysis/wiki_pages',
+        all_folders = ['analysis', 'analysis/flux_analysis', 'analysis/report',
+                       'analysis/topological_analysis', 'analysis/askomics',
+                       'analysis/wiki_pages',
                        'annotation_based_reconstruction',
                        'database',
                        'gap_filling', 'gap_filling/original_output',
                        'genomic_data',
                        'growth_medium',
                        'manual_curation', 'manual_curation/template',
-                       'networks', 'networks/external_network/', 'networks/output_annotation_based_reconstruction', 'networks/output_annotation_based_reconstruction/pathwaytools', 'networks/output_orthology_based_reconstruction', 'networks/output_orthology_based_reconstruction/orthofinder',
-                       'orthology_based_reconstruction', 'orthology_based_reconstruction/orthofinder_wd',
+                       'networks', 'networks/external_network/',
+                       'networks/output_annotation_based_reconstruction',
+                       'networks/output_annotation_based_reconstruction/pathwaytools',
+                       'networks/output_orthology_based_reconstruction',
+                       'networks/output_orthology_based_reconstruction/orthofinder',
+                       'orthology_based_reconstruction',
+                       'orthology_based_reconstruction/orthofinder_wd',
                        'targets_compounds']
         for folder in all_folders:
             print('creating folder {0}/{1}'.format(run_id, folder))
             os.mkdir("{0}/{1}".format(run_id, folder))
 
-        """
-        with open('{0}/{1}/group_template.tsv'.format(run_id, 'analysis'), 'w') as group_file:
-            group_writer = csv.writer(group_file, delimiter='\t')
-            group_writer.writerow(['all', *os.listdir('{0}/{1}'.format(run_id, 'studied_organisms'))])
-        """
-        config_file_path = '{0}/config.txt'.format(run_id)
-        create_config_file(config_file_path, run_id)
+        create_default_file(run_id)
+        
+        #config_file_path = '{0}/config.txt'.format(run_id)
+        #create_config_file(config_file_path, run_id)
 
 
 def create_config_file(config_file_path, run_id):
@@ -179,7 +183,71 @@ def create_config_file(config_file_path, run_id):
     with open(config_file_path, 'w') as configfile:
         config.write(configfile)
 
+        
+def create_default_file(run_id):
+    '''
+    Create the default files of Aureme: full_log.txt, log.txt, 
+    default_artefacts_metacyc.txt, reaction_creator.csv, and
+    reaction_to_add_delete.csv
+    '''
+    # full_log.txt file creation
+    with open('{0}/full_log.txt'.format(run_id), 'w') as full_log:
+        full = csv.writer(full_log, delimiter='\t')
+        full.writerow(['### FULL LOG ###'])
+    # log.txt file creation
+    with open('{0}/log.txt'.format(run_id), 'w') as txt_log:
+        log = csv.writer(txt_log, delimiter='\t')
+        log.writerow(['### LOG ###'])
 
+    # default_artefacts_metacyc.txt file creation
+    with open('{0}/{1}/default_artefacts_metacyc.txt'.format(run_id, 'growth_medium'), 'w') as default_artefact:
+        artefact = csv.writer(default_artefact, delimiter='\t')
+        artefact.writerow(['NADP', 'c'])
+        artefact.writerow(['ADP', 'c'])
+
+    # reaction_to_add_delete.csv file creation
+    with open('{0}/{1}/{2}/reaction_to_add_delete.csv'.format(run_id, 'manual_curation', 'template'), 'w') as reaction_add:
+        react_add = csv.writer(reaction_add, delimiter='\t')
+        react_add.writerow(['idRef',	'Comment', 'Action', 'Genes'])
+        react_add.writerow(['rxn_id_1', 'Reaction deleted for x reason',
+                            'delete'])
+        react_add.writerow(['rxn_id_2',	'Reaction added for x reason', 'add',
+                            '(gene1 and gene2)'])
+        react_add.writerow(['rxn_id_3', 'Reaction added for x reason', 'add'])
+
+    # reaction_creator.csv file creation
+    with open('{0}/{1}/{2}/reaction_creator.csv'.format(run_id, 'manual_curation', 'template'), 'w') as reaction_creator:
+        react_cr = csv.writer(reaction_creator, delimiter='\t')
+        react_cr.writerow(['reaction_id', 'my_rxn'])
+        react_cr.writerow(['comment', 'reaction added for X reason'])
+        react_cr.writerow(['reversible', 'false'])
+        react_cr.writerow(['linked_gene', '(gene_a or gene_b) and gene_c'])
+        react_cr.writerow(['#reactant/product',
+                           '#stoichio:compound_id:compart'])
+        react_cr.writerow(['reactant', '1.0:compound_a:c'])
+        react_cr.writerow(['reactant', '2.0:compound_b:c'])
+        react_cr.writerow(['product', '1.0:compound_c:c'])
+        react_cr.writerow([])
+        react_cr.writerow(['reaction_id', 'my_rxn_2'])
+        react_cr.writerow(['comment', 'reaction added for X reason'])
+        react_cr.writerow(['reversible', 'true'])
+        react_cr.writerow(['linked_gene', ''])
+        react_cr.writerow(['#reactant/product',
+                           '#stoichio:compound_id:compart'])
+        react_cr.writerow(['reactant', '1.0:compound_a:c'])
+        react_cr.writerow(['reactant', '2.0:compound_d:c'])
+        react_cr.writerow(['product', '1.0:compound_c:c'])
+        return
+            
+                  
+def get_full_right(name):
+    '''
+    Get full rigths to the name (file or directory).
+    '''
+    chmod_cmds = ["chmod", "-R", "777", name]
+    subprocess.call(chmod_cmds)
+
+    
 def get_version():
     '''
     Get version from Gitlab.
