@@ -153,10 +153,16 @@ def create_run(run_id):
 
 def create_config_file(config_file_path, run_id):
     config = configparser.RawConfigParser()
+    config.add_section('ARTEFACT')
+    config.set('ARTEFACT', 'WITH_ARTEFACTS', 'TRUE')
+    config.set('ARTEFACT', 'ARTEFACTS', 'growth_medium/artefacts')
+               
     config.add_section('DATABASE_PATHS')
-    config.set('DATABASE_PATHS', 'database_ref_path', '/home/database/BIOCYC/METACYC/22.0_enhanced/metacyc_22.0_enhanced.padmet')
+    config.set('DATABASE_PATHS', '#DATA_BASE', '/shared/atabase'
+'/home/database/BIOCYC/METACYC/22.0_enhanced/metacyc_22.0_enhanced.padmet')
     config.set('DATABASE_PATHS', 'mnx_rxn_path', '/home/database/MNX/reac_xref.tsv')
     config.set('DATABASE_PATHS', 'mnx_cpd_path', '/home/database/MNX/chem_xref.tsv')
+    
     config.add_section('PATHS_IN_RUN')
     config.set('PATHS_IN_RUN', 'run_id', run_id)
     config.set('PATHS_IN_RUN', 'studied_organisms_path', '/studied_organisms')
