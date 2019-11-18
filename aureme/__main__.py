@@ -32,6 +32,7 @@ import docopt
 import eventlet
 import mpwt
 import os
+import os.path
 import pkg_resources
 import re
 import requests
@@ -147,44 +148,85 @@ def create_run(run_id):
 
         create_default_file(run_id)
         
-        #config_file_path = '{0}/config.txt'.format(run_id)
-        #create_config_file(config_file_path, run_id)
+        config_file_path = '{0}/config.txt'.format(run_id)
+        create_config_file(config_file_path, run_id)
 
 
 def create_config_file(config_file_path, run_id):
     config = configparser.RawConfigParser()
-    config.add_section('ARTEFACT')
-    config.set('ARTEFACT', 'WITH_ARTEFACTS', 'TRUE')
-    config.set('ARTEFACT', 'ARTEFACTS', 'growth_medium/artefacts')
-               
-    config.add_section('DATABASE_PATHS')
-    config.set('DATABASE_PATHS', '#DATA_BASE', '/shared/atabase'
-'/home/database/BIOCYC/METACYC/22.0_enhanced/metacyc_22.0_enhanced.padmet')
-    config.set('DATABASE_PATHS', 'mnx_rxn_path', '/home/database/MNX/reac_xref.tsv')
-    config.set('DATABASE_PATHS', 'mnx_cpd_path', '/home/database/MNX/chem_xref.tsv')
+    config.add_section('GENERAL')
+    config.set('GENERAL', 'workflow', 'AuReMe')
+    config.set('GENERAL', 'run_id', os.path.basename(run_id))
+    #config.set('GENERAL', 'new_network', '%(network)s')
     
+    config.add_section('DATABASE_PATHS')
+    config.set('DATABASE_PATHS', '#data_base', '%(run_id)s/database/XXX')
+    config.set('DATABASE_PATHS', 'data_base',
+               '/home/data/database/BIOCYC/METACYC/23.0/metacyc_23.0')
+    config.set('DATABASE_PATHS', 'mnx_folder', '/home/data/database/MNX/2018')
+    config.set('DATABASE_PATHS', 'mnx_rxn', '%(mnx_folder)s/reac_xref.tsv')
+    config.set('DATABASE_PATHS', 'mnx_cpd', '%(mnx_folder)s/chem_xref.tsv')
+    config.set('DATABASE_PATHS', 'mnx_cpd_prop', '%(mnx_folder)s/chem_prop.tsv')
+   
     config.add_section('PATHS_IN_RUN')
-    config.set('PATHS_IN_RUN', 'run_id', run_id)
-    config.set('PATHS_IN_RUN', 'studied_organisms_path', '/studied_organisms')
-    config.set('PATHS_IN_RUN', 'model_organisms_path', '/model_organisms')
-    config.set('PATHS_IN_RUN', 'orthology_based_path', '/orthology_based')
-    config.set('PATHS_IN_RUN', 'orthofinder_wd_path', '/orthology_based/Orthofinder_WD')
-    config.set('PATHS_IN_RUN', 'annotation_based_path', '/annotation_based')
-    config.set('PATHS_IN_RUN', 'pgdb_from_annotation_path', '%(annotation_based_path)s/PGDBs')
-    config.set('PATHS_IN_RUN', 'padmet_from_annotation_path', '%(annotation_based_path)s/PADMETs')
-    config.set('PATHS_IN_RUN', 'sbml_from_annotation_path', '%(annotation_based_path)s/SBMLs')
-    config.set('PATHS_IN_RUN', 'networks_path', '/networks')
-    config.set('PATHS_IN_RUN', 'padmet_from_networks_path', '%(networks_path)s/PADMETs')
-    config.set('PATHS_IN_RUN', 'sbml_from_networks_path', '%(networks_path)s/SBMLs')
-    config.set('PATHS_IN_RUN', 'log_path', '/logs')
-    config.set('PATHS_IN_RUN', 'analysis_path', '/analysis')
-    config.set('PATHS_IN_RUN', 'analysis_group_file_path', '%(analysis_path)s/group_template.tsv')
+    config.set('PATHS_IN_RUN', 'base', run_id)
+    config.set('PATHS_IN_RUN', 'networks_folder', '%(base)s/networks')
+    config.set('PATHS_IN_RUN', 'annotation_output_folder',
+               '%(base)s/networks/output_annotation_based_reconstruction')
+    config.set('PATHS_IN_RUN', 'orthology_output_folder',
+               '%(base)s/networks/output_orthology_based_reconstruction')
+    config.set('PATHS_IN_RUN', 'external_folder',
+               '%(base)s/networks/external_network')
+    config.set('PATHS_IN_RUN', 'orthology_model_folder',
+               '%(base)s/orthology_based_reconstruction')
+    config.set('PATHS_IN_RUN', 'dict_gene', '%(model_folder)s/dict_genes.txt')
+    config.set('PATHS_IN_RUN', 'annotation_folder',
+               '%(base)s/annotation_based_reconstruction')
+    config.set('PATHS_IN_RUN', 'curation_data_folder',
+               '%(base)s/manual_curation')
+    config.set('PATHS_IN_RUN', 'genomic_folder', '%(base)s/genomic_data')
+    config.set('PATHS_IN_RUN', 'wiki_pages', '%(base)s/analysis/wiki_pages')
+    config.set('PATHS_IN_RUN', 'report_dir', '%(base)s/analysis/report')
+    config.set('PATHS_IN_RUN', 'askomics', '%(base)s/analysis/askomics')
+    config.set('PATHS_IN_RUN', 'faa_study', '%(genomic_folder/run_id)s.faa')
+    config.set('PATHS_IN_RUN', 'gbk_study', '%(genomic_folder/run_id)s.gbk')
+    config.set('PATHS_IN_RUN', 'artefacts', 'growth_medium/artefacts')
+    config.set('PATHS_IN_RUN', 'pathwaytools_output',
+               '%(networks_folder)s/output_annotation_based_reconstruction/pathwaytools/output_pathwaytools')
+    config.set('PATHS_IN_RUN', 'seeds','growth_medium/seeds')
+    config.set('PATHS_IN_RUN', 'seeds_artefacts',
+               'growth_medium/seeds_artefacts')
+    config.set('PATHS_IN_RUN', 'targets', 'targets_compounds/targets')
+    config.set('PATHS_IN_RUN', 'draft', '%(networks_folder)s/draft')    
+    
     config.add_section('TOOL_PATHS')
-    config.set('TOOL_PATHS', 'orthofinder_bin_path', '/programs/OrthoFinder-2.3.3/orthofinder')
-    config.set('TOOL_PATHS', 'padmet_utils_path', '/programs/padmet-utils')
-    config.add_section('VAR')
-    config.set('VAR', 'study_from_annot_prefix', 'output_pathwaytools_')
+    config.set('TOOL_PATHS', 'programs', '/programs')
+    config.set('TOOL_PATHS', 'padmet_u', '%(programs)s/padmet-utils')
+    config.set('TOOL_PATHS', 'orthofinder_workdir',
+               '%(orthology_model_folder)s/orthofinder_wd')
+    config.set('TOOL_PATHS', 'orthofinder_output',
+               '%(orthofinder_workdir)s/Orthologues')
+    config.set('TOOL_PATHS', 'meneco_seeds', '%(seeds)s')
+    config.set('TOOL_PATHS', 'meneco_original_output',
+               '%(base)s/gapfilling/original_output/meneco_output_%(run_is)s.txt')
+    config.set('TOOL_PATHS', 'meneco_solution',
+               '%(base)s/gapfilling/gapfilling_solution_with_meneco_%(run_id)s.csv')
+    config.set('TOOL_PATHS', 'reaction_to_add_delete', 'manual_curation/data/reaction_to_add_delete.csv')
+    config.set('TOOL_PATHS', 'new_reaction_data', 'manual_curation/data/reaction_creator.csv')
 
+    config.add_section('TOOL_PARAMETERS')
+    config.set('TOOL_PARAMETERS', 'orthology_method', 'orthofinder')
+    config.set('TOOL_PARAMETERS', 'annotation_method', 'pathwaytools')
+    config.set('TOOL_PARAMETERS', 'gap_filling_method', 'meneco')
+    config.set('TOOL_PARAMETERS', 'all_rxn', '-f')
+    config.set('TOOL_PARAMETERS', 'with_artefacts', 'TRUE')
+    config.set('TOOL_PARAMETERS', 'pwytools_installed', 'FALSE')
+    config.set('TOOL_PARAMETERS', 'no_orphan', '--no-orphan')
+    config.set('TOOL_PARAMETERS', 'cutoff','0.70')
+    config.set('TOOL_PARAMETERS', 'remove_ortho_workdir', 'TRUE')
+    config.set('TOOL_PARAMETERS', 'to_map', 'reaction')
+    config.set('TOOL_PARAMETERS', 'lvl', '3')
+    
     # Writing our configuration file to 'example.cfg'
     with open(config_file_path, 'w') as configfile:
         config.write(configfile)
