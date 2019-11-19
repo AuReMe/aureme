@@ -4,6 +4,7 @@ usage:
     aureme <command> [<args>...]
     aureme -R --run=ID
     aureme --version
+    aureme --getdb
     aureme --installPWT=PWT_path [--ptools=ptools_path]
     aureme --uninstallPWT
 
@@ -30,6 +31,7 @@ import configparser
 import csv
 import docopt
 import eventlet
+import glob
 import mpwt
 import os
 import os.path
@@ -64,14 +66,6 @@ def main(args=None):
         get_full_right(run_id)
         return
 
-    if args['--installPWT']:
-        installing_pwt(args['--installPWT'], args['--ptools'])
-        return
-
-    if args['--uninstallPWT']:
-        uninstalling_pwt()
-        return
-
     if args["--version"]:
         online_version = get_version()
         current_version = pkg_resources.get_distribution("metage2metabo").version
@@ -81,8 +75,20 @@ def main(args=None):
             print('No internet connection. Skip checking aureme version.')
         return
 
+    if args['--getdb']:
+        getdb()
+        return
+        
+    if args['--installPWT']:
+        installing_pwt(args['--installPWT'], args['--ptools'])
+        return
+
+    if args['--uninstallPWT']:
+        uninstalling_pwt()
+        return
+
     if command:
-        if command not in ['workflow', 'check', 'reconstruction', 'orthology', 'draft', 'analysis', 'compare']:
+        if command not in ['check', 'reconstruction', 'orthology', 'draft', 'analysis', 'compare']:
             sys.exit(command + ' not a valid command: workflow, check, reconstruction, orthology, draft, analysis, compare.')
 
         if '-h' in command_args:
@@ -90,12 +96,9 @@ def main(args=None):
             sys.exit()
 
         # Add command to command_args to be parse by docopt.
-        command_args.insert(0,command)
+        command_args.insert(0,command)        
 
-        if command == 'workflow':
-            aureme.workflow.workflow_parse_args(command_args)
-
-        elif command == 'check':
+        if command == 'check':
             aureme.check.check_parse_args(command_args)
 
         elif command == 'reconstruction':
@@ -167,7 +170,7 @@ def create_config_file(config_file_path, run_id):
     config.set('DATABASE_PATHS', 'mnx_rxn', '%(mnx_folder)s/reac_xref.tsv')
     config.set('DATABASE_PATHS', 'mnx_cpd', '%(mnx_folder)s/chem_xref.tsv')
     config.set('DATABASE_PATHS', 'mnx_cpd_prop', '%(mnx_folder)s/chem_prop.tsv')
-   
+       
     config.add_section('PATHS_IN_RUN')
     config.set('PATHS_IN_RUN', 'base', run_id)
     config.set('PATHS_IN_RUN', 'networks_folder', '%(base)s/networks')
@@ -313,6 +316,22 @@ def get_version():
     return version
 
 
+def getdb():
+    '''
+    Print the available databases.
+    '''
+    DB_PATH = "/home/data/database"
+    print('Available database(s) in Aureme:')
+    files = [ 
+        os.path.join(parent, name)
+        for (parent, subdirs, files) in os.walk(DB_PATH)
+        for name in files + subdirs
+    ]
+    for filename in files:
+        if (filename.endswith('.padmet')):
+            print("%s" %filename)
+
+        
 def installing_pwt(pwt_path, input_ptools_local_path):
     """
     Install silently Pathway-Tools in /programs.
