@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 usage:
-    aureme --init=ID [-v]
+    aureme --init=workdir [-v]
     aureme <command> [<args>...]
     aureme -R --run=ID
     aureme --version
@@ -17,13 +19,11 @@ options:
 
 The subcommands are:
     check    Check inputs validity
-    reconstruction    Run Pathway Tools
-    orthology    Run Orthofinder for crossing orthology between species
-    draft    Merge all networks (from Pathway Tools and Orthology)
+    annotation Run Pathway Tools
 
-    workflow    Run Check, Pathway Tools, Orthofinder and Merging of all networks
-    analysis    Analyze results
-    compare    Compare group of species
+    draft    Merge all networks (from Pathway Tools, from Orthology, from Gap-filling, from external network)
+    orthology    Run Orthofinder for crossing orthology between species
+    utils      Grather several commands to analyze, handle or format networks.
 
 See 'aureme <command> -h' for more information on a specific command.
 """
@@ -88,8 +88,8 @@ def main(args=None):
         return
 
     if command:
-        if command not in ['check', 'reconstruction', 'orthology', 'draft', 'analysis', 'compare']:
-            sys.exit(command + ' not a valid command: workflow, check, reconstruction, orthology, draft, analysis, compare.')
+        if command not in ['check', 'reconstruction', 'orthology', 'draft', 'analysis', 'utils']:
+            sys.exit(command + ' not a valid command: workflow, check, reconstruction, orthology, draft, analysis, utils.')
 
         if '-h' in command_args:
             getattr(aureme, command).command_help()
@@ -113,8 +113,8 @@ def main(args=None):
         elif command == 'analysis':
             aureme.analysis.analysis_parse_args(command_args)
 
-        elif command == 'compare':
-            aureme.compare.compare_parse_args(command_args)
+        elif command == 'utils':
+            aureme.utils.utils_parse_args(command_args)
 
 
 def create_run(run_id):
@@ -159,11 +159,11 @@ def create_config_file(config_file_path, run_id):
     config = configparser.RawConfigParser()
     config.add_section('GENERAL')
     config.set('GENERAL', 'workflow', 'AuReMe')
-    config.set('GENERAL', 'run_id', os.path.basename(run_id))
     #config.set('GENERAL', 'new_network', '%(network)s')
     
     config.add_section('DATABASE_PATHS')
-    config.set('DATABASE_PATHS', '#data_base', '%(run_id)s/database/XXX')
+    config.set('DATABASE_PATHS', 'root_db', run_id)
+    config.set('DATABASE_PATHS', '#data_base', '%(root_db)s/database/XXX')
     config.set('DATABASE_PATHS', 'data_base',
                '/home/data/database/BIOCYC/METACYC/23.0/metacyc_23.0')
     config.set('DATABASE_PATHS', 'mnx_folder', '/home/data/database/MNX/2018')
@@ -172,27 +172,33 @@ def create_config_file(config_file_path, run_id):
     config.set('DATABASE_PATHS', 'mnx_cpd_prop', '%(mnx_folder)s/chem_prop.tsv')
        
     config.add_section('PATHS_IN_RUN')
-    config.set('PATHS_IN_RUN', 'base', run_id)
-    config.set('PATHS_IN_RUN', 'networks_folder', '%(base)s/networks')
+    config.set('PATHS_IN_RUN', 'root_path', run_id)
+    config.set('PATHS_IN_RUN', 'base', os.path.basename(run_id))
+    config.set('PATHS_IN_RUN', 'networks_folder', '%(root_path)s/networks')
     config.set('PATHS_IN_RUN', 'annotation_output_folder',
-               '%(base)s/networks/output_annotation_based_reconstruction')
+               '%(root_path)s/networks/output_annotation_based_reconstruction')
     config.set('PATHS_IN_RUN', 'orthology_output_folder',
-               '%(base)s/networks/output_orthology_based_reconstruction')
+               '%(root_path)s/networks/output_orthology_based_reconstruction')
     config.set('PATHS_IN_RUN', 'external_folder',
-               '%(base)s/networks/external_network')
+               '%(root_path)s/networks/external_network')
     config.set('PATHS_IN_RUN', 'orthology_model_folder',
-               '%(base)s/orthology_based_reconstruction')
+               '%(root_path)s/orthology_based_reconstruction')
+    config.set('PATHS_IN_RUN', 'orthofinder_workdir',
+               '%(orthology_model_folder)s/orthofinder_wd')
+    config.set('PATHS_IN_RUN', 'orthofinder_output',
+               '%(orthofinder_workdir)s/Orthologues')
     config.set('PATHS_IN_RUN', 'dict_gene', '%(model_folder)s/dict_genes.txt')
     config.set('PATHS_IN_RUN', 'annotation_folder',
-               '%(base)s/annotation_based_reconstruction')
+               '%(root_path)s/annotation_based_reconstruction')
     config.set('PATHS_IN_RUN', 'curation_data_folder',
-               '%(base)s/manual_curation')
-    config.set('PATHS_IN_RUN', 'genomic_folder', '%(base)s/genomic_data')
-    config.set('PATHS_IN_RUN', 'wiki_pages', '%(base)s/analysis/wiki_pages')
-    config.set('PATHS_IN_RUN', 'report_dir', '%(base)s/analysis/report')
-    config.set('PATHS_IN_RUN', 'askomics', '%(base)s/analysis/askomics')
-    config.set('PATHS_IN_RUN', 'faa_study', '%(genomic_folder/run_id)s.faa')
-    config.set('PATHS_IN_RUN', 'gbk_study', '%(genomic_folder/run_id)s.gbk')
+               '%(root_path)s/manual_curation')
+    config.set('PATHS_IN_RUN', 'genomic_folder', '%(root_path)s/genomic_data')
+    config.set('PATHS_IN_RUN', 'wiki_pages',
+               '%(root_path)s/analysis/wiki_pages')
+    config.set('PATHS_IN_RUN', 'report_dir', '%(root_path)s/analysis/report')
+    config.set('PATHS_IN_RUN', 'askomics', '%(root_path)s/analysis/askomics')
+    config.set('PATHS_IN_RUN', 'faa_study', '%(genomic_folder)s/%(base)s.faa')
+    config.set('PATHS_IN_RUN', 'gbk_study', '%(genomic_folder)s/%(base)s.gbk')
     config.set('PATHS_IN_RUN', 'artefacts', 'growth_medium/artefacts')
     config.set('PATHS_IN_RUN', 'pathwaytools_output',
                '%(networks_folder)s/output_annotation_based_reconstruction/pathwaytools/output_pathwaytools')
@@ -200,20 +206,17 @@ def create_config_file(config_file_path, run_id):
     config.set('PATHS_IN_RUN', 'seeds_artefacts',
                'growth_medium/seeds_artefacts')
     config.set('PATHS_IN_RUN', 'targets', 'targets_compounds/targets')
+    config.set('PATHS_IN_RUN', 'meneco_seeds', '%(seeds)s')
+    config.set('PATHS_IN_RUN', 'meneco_original_output',
+               '%(base)s/gapfilling/original_output/meneco_output_%(base)s.txt')
+    config.set('PATHS_IN_RUN', 'meneco_solution',
+               '%(root_path)s/gapfilling/gapfilling_solution_with_meneco_%(base)s.csv')
     config.set('PATHS_IN_RUN', 'draft', '%(networks_folder)s/draft')    
     
     config.add_section('TOOL_PATHS')
     config.set('TOOL_PATHS', 'programs', '/programs')
-    config.set('TOOL_PATHS', 'padmet_u', '%(programs)s/padmet-utils')
-    config.set('TOOL_PATHS', 'orthofinder_workdir',
-               '%(orthology_model_folder)s/orthofinder_wd')
-    config.set('TOOL_PATHS', 'orthofinder_output',
-               '%(orthofinder_workdir)s/Orthologues')
-    config.set('TOOL_PATHS', 'meneco_seeds', '%(seeds)s')
-    config.set('TOOL_PATHS', 'meneco_original_output',
-               '%(base)s/gapfilling/original_output/meneco_output_%(run_is)s.txt')
-    config.set('TOOL_PATHS', 'meneco_solution',
-               '%(base)s/gapfilling/gapfilling_solution_with_meneco_%(run_id)s.csv')
+    config.set('TOOL_PATHS', 'padmet_u',
+               '%(programs)s/padmet-utils/padmet_utils')
     config.set('TOOL_PATHS', 'reaction_to_add_delete', 'manual_curation/data/reaction_to_add_delete.csv')
     config.set('TOOL_PATHS', 'new_reaction_data', 'manual_curation/data/reaction_creator.csv')
 
@@ -236,11 +239,11 @@ def create_config_file(config_file_path, run_id):
 
         
 def create_default_file(run_id):
-    '''
+    """
     Create the default files of Aureme: full_log.txt, log.txt, 
     default_artefacts_metacyc.txt, reaction_creator.csv, and
     reaction_to_add_delete.csv
-    '''
+    """
     # full_log.txt file creation
     with open('{0}/full_log.txt'.format(run_id), 'w') as full_log:
         full = csv.writer(full_log, delimiter='\t')
@@ -292,18 +295,18 @@ def create_default_file(run_id):
             
                   
 def get_full_right(name):
-    '''
+    """
     Get full rigths to the name (file or directory).
-    '''
+    """
     chmod_cmds = ["chmod", "-R", "777", name]
     subprocess.call(chmod_cmds)
 
     
 def get_version():
-    '''
+    """
     Get version from Gitlab.
     Check internet connection using requests and eventlet timeout.
-    '''
+    """
     reg_version = r'^\#+VERSION:([0-9.]*)#+'
     with eventlet.Timeout(2):
         try:
@@ -317,9 +320,9 @@ def get_version():
 
 
 def getdb():
-    '''
-    Print the available databases.
-    '''
+    """
+    Print the available refenced databases.
+    """
     DB_PATH = "/home/data/database"
     print('Available database(s) in Aureme:')
     files = [ 

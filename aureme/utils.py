@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Some utils function.
+Usage:
+    aureme utils --run=ID --compounds_to_sbml --cpd=/path/to/root/txt_file [-v]
+
+options:
+    --run=ID    Pathname to the aureme directory.
+  
 """
 
 import configparser
@@ -10,51 +15,45 @@ import docopt
 import eventlet
 import mpwt
 import os
+import os.path
 import re
 import subprocess
 import time
 
-def parse_config_file(run_id):
-    config_file_path = "{0}/config.txt".format(run_id)
+from aureme.parse import parse_config_file
 
-    config = configparser.ConfigParser()
-    config.read(config_file_path)
 
-    #DATABASE_PATHS
-    database_path = config.get('DATABASE_PATHS','database_ref_path')
-    mnx_rxn_path = config.get('DATABASE_PATHS','mnx_rxn_path')
-    mnx_cpd_path = config.get('DATABASE_PATHS','mnx_cpd_path')
-    #PATHS_IN_RUN
-    studied_organisms_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','studied_organisms_path'))
-    model_organisms_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','model_organisms_path'))
-    orthology_based_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','orthology_based_path'))
-    orthofinder_wd_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','orthofinder_wd_path'))    
-    annotation_based_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','annotation_based_path'))
-    pgdb_from_annotation_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','pgdb_from_annotation_path'))
-    padmet_from_annotation_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','padmet_from_annotation_path'))
-    sbml_from_annotation_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','sbml_from_annotation_path'))
-    log_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','log_path'))
-    analysis_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','analysis_path'))
-    analysis_group_file_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','analysis_group_file_path'))
-    networks_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','networks_path'))
-    padmet_from_networks_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','padmet_from_networks_path'))
-    sbml_from_networks_path = "{0}/{1}".format(run_id, config.get('PATHS_IN_RUN','sbml_from_networks_path'))
+def command_help():
+    print(docopt.docopt(__doc__))
 
-    #TOOL_PATHS
-    orthofinder_bin_path = config.get('TOOL_PATHS','orthofinder_bin_path')
-    padmet_utils_path = config.get('TOOL_PATHS', 'padmet_utils_path')
-    #VAR
-    study_from_annot_prefix = config.get('VAR','study_from_annot_prefix')
 
-    config_data = {'database_path': database_path, 'mnx_rxn_path': mnx_rxn_path, 'mnx_cpd_path': mnx_cpd_path,
-                    'studied_organisms_path': studied_organisms_path, 'model_organisms_path': model_organisms_path,
-                    'orthology_based_path': orthology_based_path, 'orthofinder_wd_path': orthofinder_wd_path,
-                    'annotation_based_path': annotation_based_path, 'pgdb_from_annotation_path': pgdb_from_annotation_path,
-                    'padmet_from_annotation_path': padmet_from_annotation_path, 'sbml_from_annotation_path': sbml_from_annotation_path,
-                    'sbml_from_annotation_path': sbml_from_annotation_path, 'log_path': log_path,
-                    'networks_path': networks_path, 'orthofinder_bin_path': orthofinder_bin_path,
-                    'padmet_utils_path': padmet_utils_path, 'study_from_annot_prefix': study_from_annot_prefix, 'analysis_path': analysis_path,
-                    'padmet_from_networks_path': padmet_from_networks_path, 'sbml_from_networks_path': sbml_from_networks_path,
-                    'analysis_group_file_path': analysis_group_file_path}
+def utils_parse_args(command_args):
+    args = docopt.docopt(__doc__, argv=command_args)
+    run_id = args['--run']
+    verbose = args['-v']
 
-    return config_data
+    if args['--compounds_to_sbml'] and args['--cpd']:
+            txt_file = args['--cpd']
+            compounds_to_sbml(run_id, txt_file, verbose)
+
+    
+def compounds_to_sbml(species, txt_file, verbose):
+    """
+    It read the txt_file and it creates a sbml file.
+    """
+    run_id = "/shared/" + species
+    config_data = parse_config_file(run_id)
+    padmet_u = config_data['padmet_u']
+    root_file = run_id + "/" + txt_file
+
+    if os.path.exists(root_file + ".txt"):
+        print('"------>RUNNING STEP : creating file %s.sbml' %txt_file)
+        cmds = ["python3.7", padmet_u + "/connection/sbmlGenerator.py",
+                "--compound=" + root_file + ".txt",
+                "--output=" + root_file + ".sbml"]
+        if verbose:
+            cmds.append('-v')
+            subprocess.call(cmds)
+    else:
+        print(root_file + ".txt is missing.")
+        exit()
