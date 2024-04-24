@@ -30,7 +30,7 @@ setup(name='aureme',
       ],
       packages=['aureme'],
       install_requires=[
-            'scipy==1.3.0',
+            'scipy,
       ],
       entry_points={
           'console_scripts': [
